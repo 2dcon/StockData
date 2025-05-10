@@ -56,6 +56,7 @@ void StockData::ReadTicks(const std::string &filePath, Ticks &ticks)
 
 void StockData::ReadBars(const std::string &filePath, Bars &bars)
 {
+    const size_t symbolSize = 6;
     std::ifstream file(filePath, std::ios::binary);
     if (file.is_open())
     {
@@ -66,7 +67,8 @@ void StockData::ReadBars(const std::string &filePath, Bars &bars)
         size_t dataCount = dataSize / sizeof(StockData::Bar);
 
         bars.data = new StockData::Bar[dataCount];
-        file.read((char*)&bars.symbol, StockData::SYMBOL_SIZE);
+        file.read((char*)&bars.symbol, symbolSize);
+        file.read((char*)&bars.frequency, sizeof(DataFrequency));
         file.read((char*)bars.data, dataSize);
         bars.barCount = dataCount;
 

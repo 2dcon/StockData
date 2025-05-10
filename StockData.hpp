@@ -10,8 +10,8 @@ namespace StockData
 {
     constexpr size_t SYMBOL_SIZE = 8; // 6 characters + null terminator + 1 padding
     constexpr size_t TICK_INFO_SIZE = StockData::SYMBOL_SIZE - sizeof(uint32_t) - sizeof(size_t);
-    constexpr size_t BAR_INFO_SIZE = StockData::SYMBOL_SIZE;
-
+    constexpr size_t BAR_INFO_SIZE = 6 + sizeof(int);
+    
     struct Tick
     {
         uint64_t time; // time of the day, e.g. 103003
@@ -26,7 +26,7 @@ namespace StockData
         double bidVolumes[5];
         double bidPrices[5];
     };
-
+    
     struct Ticks
     {
         char symbol[SYMBOL_SIZE];
@@ -34,7 +34,7 @@ namespace StockData
         size_t tickCount;
         Tick* data;
     };
-
+    
     enum class DataFrequency
     {
         Undefined = 0,

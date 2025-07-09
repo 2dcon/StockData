@@ -11,7 +11,7 @@ namespace StockData
     constexpr size_t SYMBOL_SIZE = 8; // 6 characters + null terminator + 1 padding
     constexpr size_t TICK_INFO_SIZE = StockData::SYMBOL_SIZE - sizeof(uint32_t) - sizeof(size_t);
     constexpr size_t BAR_INFO_SIZE = 6 + sizeof(int);
-    
+
     struct Tick
     {
         uint64_t time; // time of the day, e.g. 103003
@@ -26,7 +26,7 @@ namespace StockData
         double bidVolumes[5];
         double bidPrices[5];
     };
-    
+
     struct Ticks
     {
         char symbol[SYMBOL_SIZE];
@@ -34,7 +34,7 @@ namespace StockData
         size_t tickCount;
         Tick* data;
     };
-    
+
     enum class DataFrequency
     {
         Undefined = 0,
@@ -60,6 +60,48 @@ namespace StockData
         DataFrequency frequency;
         Bar* data = nullptr;
         size_t barCount = 0; // not stored in the file
+
+        // Default constructor
+        Bars() = default;
+
+        // Copy constructor
+        Bars(const Bars& other) : frequency(other.frequency), barCount(other.barCount)
+        {
+            std::memcpy(symbol, other.symbol, SYMBOL_SIZE);
+            if (other.data && other.barCount > 0) {
+                data = new Bar[other.barCount];
+                std::memcpy(data, other.data, other.barCount * sizeof(Bar));
+            } else {
+                data = nullptr;
+            }
+        }
+
+        Bars& operator=(const Bars& other)
+        {
+            if (this != &other)
+            {
+                if (data != nullptr)
+                {
+                    delete[] data;
+                }
+
+                std::memcpy(symbol, other.symbol, SYMBOL_SIZE);
+                frequency = other.frequency;
+                barCount = other.barCount;
+
+                if (other.data && other.barCount > 0)
+                {
+                    data = new Bar[other.barCount];
+                    std::memcpy(data, other.data, other.barCount * sizeof(Bar));
+                }
+                else
+                {
+                    data = nullptr;
+                    barCount = 0;
+                }
+            }
+            return *this;
+        }
 
         ~Bars()
         {

@@ -6,9 +6,12 @@
 #include <string>
 #include <iostream>
 
+#include "utils/misc.hpp"
+
 namespace StockData
 {
     constexpr size_t SYMBOL_SIZE = 8; // 6 characters + null terminator + 1 padding
+    constexpr size_t BARS_SYMBOL_SIZE = 6;
     constexpr size_t TICK_INFO_SIZE = StockData::SYMBOL_SIZE - sizeof(uint32_t) - sizeof(size_t);
     constexpr size_t BAR_INFO_SIZE = 6 + sizeof(int);
 
@@ -52,11 +55,23 @@ namespace StockData
         double close;
         double volume;
         double amount;
+
+        friend std::ostream& operator<<(std::ostream& os, const Bar& bar)
+        {
+            os << "[" << bar.time
+               << "] " << Utils::roundPrice(bar.open)
+               << " | " << Utils::roundPrice(bar.high)
+               << " | " << Utils::roundPrice(bar.low)
+               << " | " << Utils::roundPrice(bar.close)
+               << " | " << Utils::roundAsLong(bar.volume)
+               << " | " << Utils::roundAsLong(bar.amount);
+            return os;
+        }
     };
 
     struct Bars
     {
-        char symbol[SYMBOL_SIZE];
+        char symbol[BARS_SYMBOL_SIZE];
         DataFrequency frequency;
         Bar* data = nullptr;
         size_t barCount = 0; // not stored in the file
@@ -67,12 +82,69 @@ namespace StockData
         // Copy constructor
         Bars(const Bars& other) : frequency(other.frequency), barCount(other.barCount)
         {
-            std::memcpy(symbol, other.symbol, SYMBOL_SIZE);
+            std::memcpy(symbol, other.symbol, BARS_SYMBOL_SIZE);
             if (other.data && other.barCount > 0) {
                 data = new Bar[other.barCount];
                 std::memcpy(data, other.data, other.barCount * sizeof(Bar));
             } else {
                 data = nullptr;
+            }
+        }
+
+        /// @brief Find a specific number of bars from a given date (included)
+        /// @param date the date from which to search
+        /// @param count positive for bars after the given date, negative for otherwise
+        /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order
+        /// @return true if any bars were found, false otherwise
+        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<Bar>& results) const
+        {
+            results.clear();
+
+            size_t dateIdx = 0;
+            bool dateFound = false;
+            for (size_t i = 0; i < barCount; ++i)
+            {
+                if (data[i].time == date)
+                {
+                    dateIdx = i;
+                    dateFound = true;
+                    break;
+                }
+            }
+
+            if (dateFound)
+            {
+                if (backward)
+                {
+                    size_t startIdx = (dateIdx >= count) ? dateIdx - count + 1 : 0;
+                    for (size_t i = startIdx; i <= dateIdx && results.size() < count; ++i)
+                    {
+                        results.push_back(data[i]);
+                    }
+                }
+                else
+                {
+                    size_t endIdx = (dateIdx + count < barCount) ? dateIdx + count : barCount;
+                    for (size_t i = dateIdx; i < endIdx && results.size() < count; ++i)
+                    {
+                        results.push_back(data[i]);
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        void Clear()
+        {
+            if (data != nullptr)
+            {
+                delete[] data;
+                data = nullptr;
+                barCount = 0;
             }
         }
 
@@ -85,7 +157,7 @@ namespace StockData
                     delete[] data;
                 }
 
-                std::memcpy(symbol, other.symbol, SYMBOL_SIZE);
+                std::memcpy(symbol, other.symbol, BARS_SYMBOL_SIZE);
                 frequency = other.frequency;
                 barCount = other.barCount;
 
@@ -118,6 +190,16 @@ namespace StockData
     void ReadTicks(const char* buffer, const size_t& bufferSize, Ticks& ticks);
     void ReadTicks(const std::string& filePath, Ticks& ticks);
 
+
+    /// @brief Reads bars data from bytes
+    /// @param buffer
+    /// @param bufferSize
+    /// @param bars
+    void ReadBars(char* buffer, size_t bufferSize, Bars& bars);
+
+    /// @brief Reads bars data from a binary file
+    /// @param filePath
+    /// @param bars
     void ReadBars(const std::string& filePath, Bars& bars);
 
     enum EventTypes

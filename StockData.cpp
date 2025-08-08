@@ -45,13 +45,28 @@ void StockData::ReadTicks(const std::string &filePath, Ticks &ticks)
         }
         ticks.data = new StockData::Tick[dataCount];
         file.read((char*)ticks.data, dataSize);
-        
+
         file.close();
     }
     else
     {
         std::cerr << "Failed to open file: " << filePath << '\n';
     }
+}
+
+void StockData::ReadBars(char *buffer, size_t bufferSize, Bars &bars)
+{
+    char *bufferPos = buffer;
+    size_t dataSize = bufferSize - StockData::BAR_INFO_SIZE;
+    bars.barCount = dataSize / sizeof(StockData::Bar);
+
+    memcpy(&bars.symbol, bufferPos, StockData::BARS_SYMBOL_SIZE);
+    bufferPos += StockData::BARS_SYMBOL_SIZE;
+    memcpy(&bars.frequency, bufferPos, sizeof(DataFrequency));
+    bufferPos += sizeof(DataFrequency);
+
+    bars.data = new StockData::Bar[bars.barCount];
+    memcpy(bars.data, bufferPos, dataSize);
 }
 
 void StockData::ReadBars(const std::string &filePath, Bars &bars)

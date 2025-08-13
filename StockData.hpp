@@ -71,24 +71,19 @@ namespace StockData
 
     struct Bars
     {
-        char symbol[BARS_SYMBOL_SIZE];
-        DataFrequency frequency;
-        Bar* data = nullptr;
-        size_t barCount = 0; // not stored in the file
+        std::string symbol;
+        DataFrequency frequency = DataFrequency::Undefined;
+        std::vector<Bar> data;
 
         // Default constructor
         Bars() = default;
 
         // Copy constructor
-        Bars(const Bars& other) : frequency(other.frequency), barCount(other.barCount)
+        Bars(const Bars& other) : frequency(other.frequency), data(other.data)
         {
-            std::memcpy(symbol, other.symbol, BARS_SYMBOL_SIZE);
-            if (other.data && other.barCount > 0) {
-                data = new Bar[other.barCount];
-                std::memcpy(data, other.data, other.barCount * sizeof(Bar));
-            } else {
-                data = nullptr;
-            }
+            symbol = other.symbol;
+            frequency = other.frequency;
+            data = other.data;
         }
 
         /// @brief Find a specific number of bars from a given date (included)
@@ -102,7 +97,7 @@ namespace StockData
 
             size_t dateIdx = 0;
             bool dateFound = false;
-            for (size_t i = 0; i < barCount; ++i)
+            for (size_t i = 0; i < data.size(); ++i)
             {
                 if (data[i].time == date)
                 {
@@ -124,7 +119,7 @@ namespace StockData
                 }
                 else
                 {
-                    size_t endIdx = (dateIdx + count < barCount) ? dateIdx + count : barCount;
+                    size_t endIdx = (dateIdx + count < data.size()) ? dateIdx + count : data.size();
                     for (size_t i = dateIdx; i < endIdx && results.size() < count; ++i)
                     {
                         results.push_back(data[i]);
@@ -140,62 +135,35 @@ namespace StockData
 
         void Clear()
         {
-            if (data != nullptr)
-            {
-                delete[] data;
-                data = nullptr;
-                barCount = 0;
-            }
+            symbol = "UNDEFINED";
+            frequency = DataFrequency::Undefined;
+            data.clear();
         }
 
         Bars& operator=(const Bars& other)
         {
-            if (this != &other)
-            {
-                if (data != nullptr)
-                {
-                    delete[] data;
-                }
 
-                std::memcpy(symbol, other.symbol, BARS_SYMBOL_SIZE);
-                frequency = other.frequency;
-                barCount = other.barCount;
+            symbol = other.symbol;
+            frequency = other.frequency;
+            data = other.data;
 
-                if (other.data && other.barCount > 0)
-                {
-                    data = new Bar[other.barCount];
-                    std::memcpy(data, other.data, other.barCount * sizeof(Bar));
-                }
-                else
-                {
-                    data = nullptr;
-                    barCount = 0;
-                }
-            }
             return *this;
         }
 
         ~Bars()
         {
-            // std::cout << "Deleting bars for " << symbol << '\n';
-            if (data != nullptr && barCount > 0)
-            {
-                delete[] data;
-                data = nullptr;
-                barCount = 0;
-            }
+            data.clear();
         }
     };
 
     void ReadTicks(const char* buffer, const size_t& bufferSize, Ticks& ticks);
     void ReadTicks(const std::string& filePath, Ticks& ticks);
 
-
     /// @brief Reads bars data from bytes
     /// @param buffer
     /// @param bufferSize
     /// @param bars
-    void ReadBars(char* buffer, size_t bufferSize, Bars& bars);
+    void ReadBars(const char* buffer, size_t bufferSize, Bars& bars);
 
     /// @brief Reads bars data from a binary file
     /// @param filePath

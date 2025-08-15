@@ -91,7 +91,7 @@ namespace StockData
         /// @param count positive for bars after the given date, negative for otherwise
         /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order
         /// @return true if any bars were found, false otherwise
-        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<Bar>& results) const
+        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<const Bar*>& results) const
         {
             results.clear();
 
@@ -109,26 +109,51 @@ namespace StockData
 
             if (dateFound)
             {
+                bool fillData = false; // fill with nullptr when no data is available
+                long startIdx, endIdx, currentIdx;
+                long min = 0, max = data.size() - 1;
                 if (backward)
                 {
-                    size_t startIdx = (dateIdx >= count) ? dateIdx - count + 1 : 0;
-                    for (size_t i = startIdx; i <= dateIdx && results.size() < count; ++i)
-                    {
-                        results.push_back(data[i]);
-                    }
+                    startIdx = dateIdx - count + 1;
+                    endIdx = dateIdx;
                 }
                 else
                 {
-                    size_t endIdx = (dateIdx + count < data.size()) ? dateIdx + count : data.size();
-                    for (size_t i = dateIdx; i < endIdx && results.size() < count; ++i)
-                    {
-                        results.push_back(data[i]);
-                    }
+                    startIdx = dateIdx;
+                    endIdx = dateIdx + count;
                 }
+
+                currentIdx = startIdx;
+                if (currentIdx < 0l)
+                {
+                    for (long i = currentIdx; i < 0; ++i)
+                    {
+                        results.push_back(nullptr);
+                    }
+                    currentIdx = 0;
+                }
+
+                for (long i = currentIdx; i <= endIdx; ++i)
+                {
+                    if (i > max)
+                    {
+                        for (long j = i; j <= endIdx; ++j)
+                        {
+                            results.push_back(nullptr);
+                        }
+                        break;
+                    }
+
+                    // std::cout << "pushing: " << i << std::endl;
+                    results.push_back(&data[i]);
+                    // std::cout << "pushed: " << i << std::endl;
+                }
+
                 return true;
             }
             else
             {
+                // std::cout << "Returning false" << std::endl;
                 return false;
             }
         }

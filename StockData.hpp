@@ -89,7 +89,7 @@ namespace StockData
         /// @brief Find a specific number of bars from a given date (included)
         /// @param date the date from which to search
         /// @param count positive for bars after the given date, negative for otherwise
-        /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order
+        /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order. Dates not found will be filled with nullptr
         /// @return true if any bars were found, false otherwise
         bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<const Bar*>& results) const
         {

@@ -124,9 +124,9 @@ namespace StockData
                 }
 
                 currentIdx = startIdx;
-                if (currentIdx < 0l)
+                if (currentIdx < min)
                 {
-                    for (long i = currentIdx; i < 0; ++i)
+                    for (long i = currentIdx; i < min; ++i)
                     {
                         results.push_back(nullptr);
                     }

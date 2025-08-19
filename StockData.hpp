@@ -14,6 +14,7 @@ namespace StockData
     constexpr size_t BARS_SYMBOL_SIZE = 6;
     constexpr size_t TICK_INFO_SIZE = StockData::SYMBOL_SIZE - sizeof(uint32_t) - sizeof(size_t);
     constexpr size_t BAR_INFO_SIZE = 6 + sizeof(int);
+    constexpr size_t AUGMENTED_BAR_INFO_SIZE = BAR_INFO_SIZE + sizeof(double); // + average distance
 
     struct Tick
     {
@@ -178,6 +179,148 @@ namespace StockData
         ~Bars()
         {
             data.clear();
+        }
+    };
+
+    struct AugmentedBar
+    {
+        uint64_t time;  // for 1d bar or 1m bar
+        double open;
+        double openDistance;
+        double high;
+        double highDistance;
+        double low;
+        double lowDistance;
+        double close;
+        double closeDistance;
+        double average;
+        double averageDistance;
+        double volume;
+        double volumeDistance;
+        double amount;
+        double amountDistance;
+
+        friend std::ostream& operator<<(std::ostream& os, const AugmentedBar& bar)
+        {
+            os << "[" << bar.time
+               << "] " << Utils::roundPrice(bar.open)
+               << " | " << Utils::roundPrice(bar.high)
+               << " | " << Utils::roundPrice(bar.low)
+               << " | " << Utils::roundPrice(bar.close)
+               << " | " << Utils::roundAsLong(bar.volume)
+               << " | " << Utils::roundAsLong(bar.amount);
+            return os;
+        }
+    };
+
+    struct AugmentedBars
+    {
+        std::string symbol;
+        DataFrequency frequency = DataFrequency::Undefined;
+        double averageDistance;
+        std::vector<AugmentedBar> data;
+
+        AugmentedBars()
+        {
+            symbol = "UNDEFINED";
+            frequency = DataFrequency::Undefined;
+            averageDistance = 0.0;
+            data.clear();
+        }
+
+        /// @brief Copy constructor
+        /// @param buffer
+        /// @param bufferSize
+        /// @return
+        AugmentedBars(const AugmentedBars& other):
+            symbol(other.symbol),
+            frequency(other.frequency),
+            averageDistance(other.averageDistance),
+            data(other.data)
+        {}
+
+        AugmentedBars(const Bars& rawBars)
+        {
+            symbol = rawBars.symbol;
+            frequency = rawBars.frequency;
+            averageDistance = 0.0;
+            data.clear();
+            for (const auto& bar : rawBars.data)
+            {
+                data.push_back(AugmentedBar{
+                    bar.time,
+                    bar.open,
+                    0.0,
+                    bar.high,
+                    0.0,
+                    bar.low,
+                    0.0,
+                    bar.close,
+                    0.0,
+                    bar.amount / bar.volume,
+                    0.0,
+                    bar.volume,
+                    0.0,
+                    bar.amount,
+                    0.0
+                });
+            }
+        }
+
+        /// @brief Read an AugmentedBars from bytes
+        /// @param buffer
+        /// @param bufferSize
+        AugmentedBars(char* buffer, const size_t& bufferSize)
+        {
+            char* currentPos = buffer;
+
+            if (bufferSize < AUGMENTED_BAR_INFO_SIZE)
+            {
+                std::cerr << "Buffer size is too small for AugmentedBars" << std::endl;
+                return;
+            }
+            size_t dataCount = (bufferSize - AUGMENTED_BAR_INFO_SIZE) / sizeof(AugmentedBar);
+
+            symbol.resize(BARS_SYMBOL_SIZE, '\0');
+            memcpy(symbol.data(), currentPos, BARS_SYMBOL_SIZE);
+            currentPos += BARS_SYMBOL_SIZE;
+
+            frequency = static_cast<DataFrequency>(*reinterpret_cast<int*>(currentPos));
+            currentPos += sizeof(int);
+
+            averageDistance = *reinterpret_cast<double*>(currentPos);
+            currentPos += sizeof(double);
+
+            data.resize(dataCount);
+            memcpy(data.data(), currentPos, dataCount * sizeof(AugmentedBar));
+        }
+
+        bool GetBarsBetweenDates(size_t startDateInclusive, size_t endDateInclusive, size_t expectedDataCount,
+            std::vector<const AugmentedBar*>& results) const
+        {
+            results.clear();
+            for (const auto& bar : data)
+            {
+                if (bar.time >= startDateInclusive && bar.time <= endDateInclusive)
+                {
+                    results.push_back(&bar);
+                }
+            }
+            return results.size() == expectedDataCount;
+        }
+
+        void Clear()
+        {
+            symbol = "UNDEFINED";
+            frequency = DataFrequency::Undefined;
+            averageDistance = 0.0;
+            data.clear();
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const AugmentedBars& bars)
+        {
+            os << bars.averageDistance << " | " << bars.symbol << "\n";
+            return os;
         }
     };
 

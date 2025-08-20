@@ -199,6 +199,7 @@ namespace StockData
         double volumeDistance;
         double amount;
         double amountDistance;
+        double barDistance;
 
         friend std::ostream& operator<<(std::ostream& os, const AugmentedBar& bar)
         {
@@ -248,21 +249,23 @@ namespace StockData
             for (const auto& bar : rawBars.data)
             {
                 data.push_back(AugmentedBar{
-                    bar.time,
-                    bar.open,
-                    0.0,
-                    bar.high,
-                    0.0,
-                    bar.low,
-                    0.0,
-                    bar.close,
-                    0.0,
-                    bar.amount / bar.volume,
-                    0.0,
-                    bar.volume,
-                    0.0,
-                    bar.amount,
-                    0.0
+                    time: bar.time,
+                    open: bar.open,
+                    openDistance: 0.0,
+                    high: bar.high,
+                    highDistance: 0.0,
+                    low: bar.low,
+                    lowDistance: 0.0,
+                    close: bar.close,
+                    closeDistance: 0.0,
+                    average: (bar.amount / bar.volume),
+                    averageDistance: 0.0,
+                    volume: bar.volume,
+                    volumeDistance: 0.0,
+                    amount: bar.amount / bar.volume,
+                    amountDistance: 0.0,
+                    barDistance: 0.0
+
                 });
             }
         }
@@ -293,6 +296,11 @@ namespace StockData
 
             data.resize(dataCount);
             memcpy(data.data(), currentPos, dataCount * sizeof(AugmentedBar));
+
+            for (size_t i = 0; i < 10; ++i)
+            {
+                std::cout << data[i].time << '\n';
+            }
         }
 
         bool GetBarsBetweenDates(size_t startDateInclusive, size_t endDateInclusive, size_t expectedDataCount,

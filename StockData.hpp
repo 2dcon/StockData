@@ -200,6 +200,7 @@ namespace StockData
         double amount;
         double amountDistance;
         double barDistance;
+        uint64_t HasDistances;
 
         friend std::ostream& operator<<(std::ostream& os, const AugmentedBar& bar)
         {
@@ -264,8 +265,8 @@ namespace StockData
                     volumeDistance: 0.0,
                     amount: bar.amount / bar.volume,
                     amountDistance: 0.0,
-                    barDistance: 0.0
-
+                    barDistance: 0.0,
+                    HasDistances: 0
                 });
             }
         }
@@ -303,18 +304,76 @@ namespace StockData
             }
         }
 
-        bool GetBarsBetweenDates(size_t startDateInclusive, size_t endDateInclusive, size_t expectedDataCount,
-            std::vector<const AugmentedBar*>& results) const
+        /// @brief Find a specific number of bars from a given date (included)
+        /// @param date the date from which to search
+        /// @param count positive for bars after the given date, negative for otherwise
+        /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order. Dates not found will be filled with nullptr
+        /// @return true if any bars were found, false otherwise
+        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<const AugmentedBar*>& results) const
         {
             results.clear();
-            for (const auto& bar : data)
+
+            size_t dateIdx = 0;
+            bool dateFound = false;
+            for (size_t i = 0; i < data.size(); ++i)
             {
-                if (bar.time >= startDateInclusive && bar.time <= endDateInclusive)
+                if (data[i].time == date)
                 {
-                    results.push_back(&bar);
+                    dateIdx = i;
+                    dateFound = true;
+                    break;
                 }
             }
-            return results.size() == expectedDataCount;
+
+            if (dateFound)
+            {
+                bool fillData = false; // fill with nullptr when no data is available
+                long startIdx, endIdx, currentIdx;
+                long min = 0, max = data.size() - 1;
+                if (backward)
+                {
+                    startIdx = dateIdx - count + 1;
+                    endIdx = dateIdx;
+                }
+                else
+                {
+                    startIdx = dateIdx;
+                    endIdx = dateIdx + count;
+                }
+
+                currentIdx = startIdx;
+                if (currentIdx < min)
+                {
+                    for (long i = currentIdx; i < min; ++i)
+                    {
+                        results.push_back(nullptr);
+                    }
+                    currentIdx = 0;
+                }
+
+                for (long i = currentIdx; i <= endIdx; ++i)
+                {
+                    if (i > max)
+                    {
+                        for (long j = i; j <= endIdx; ++j)
+                        {
+                            results.push_back(nullptr);
+                        }
+                        break;
+                    }
+
+                    // std::cout << "pushing: " << i << std::endl;
+                    results.push_back(&data[i]);
+                    // std::cout << "pushed: " << i << std::endl;
+                }
+
+                return true;
+            }
+            else
+            {
+                // std::cout << "Returning false" << std::endl;
+                return false;
+            }
         }
 
         void Clear()

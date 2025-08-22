@@ -205,12 +205,12 @@ namespace StockData
         friend std::ostream& operator<<(std::ostream& os, const AugmentedBar& bar)
         {
             os << "[" << bar.time
-               << "] " << Utils::roundPrice(bar.open)
-               << " | " << Utils::roundPrice(bar.high)
-               << " | " << Utils::roundPrice(bar.low)
-               << " | " << Utils::roundPrice(bar.close)
-               << " | " << Utils::roundAsLong(bar.volume)
-               << " | " << Utils::roundAsLong(bar.amount);
+               << "] O: " << Utils::roundPrice(bar.open)
+               << " | H: " << Utils::roundPrice(bar.high)
+               << " | L: " << Utils::roundPrice(bar.low)
+               << " | C: " << Utils::roundPrice(bar.close)
+               << " | V: " << Utils::roundAsLong(bar.volume)
+               << " | A: " << Utils::roundAsLong(bar.amount);
             return os;
         }
     };
@@ -298,10 +298,6 @@ namespace StockData
             data.resize(dataCount);
             memcpy(data.data(), currentPos, dataCount * sizeof(AugmentedBar));
 
-            for (size_t i = 0; i < 10; ++i)
-            {
-                std::cout << data[i].time << '\n';
-            }
         }
 
         /// @brief Find a specific number of bars from a given date (included)

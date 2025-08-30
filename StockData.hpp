@@ -323,7 +323,6 @@ namespace StockData
 
             if (dateFound)
             {
-                bool fillData = false; // fill with nullptr when no data is available
                 long startIdx, endIdx, currentIdx;
                 long min = 0, max = data.size() - 1;
                 if (backward)

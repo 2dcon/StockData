@@ -12,9 +12,10 @@ namespace StockData
 {
     constexpr size_t SYMBOL_SIZE = 8; // 6 characters + null terminator + 1 padding
     constexpr size_t BARS_SYMBOL_SIZE = 6;
+    constexpr size_t AU_SYMBOL_SIZE = 12;
     constexpr size_t TICK_INFO_SIZE = StockData::SYMBOL_SIZE - sizeof(uint32_t) - sizeof(size_t);
-    constexpr size_t BAR_INFO_SIZE = 6 + sizeof(int);
-    constexpr size_t AUGMENTED_BAR_INFO_SIZE = BAR_INFO_SIZE + sizeof(double); // + average distance
+    constexpr size_t BAR_INFO_SIZE = BARS_SYMBOL_SIZE + sizeof(int);
+    constexpr size_t AUGMENTED_BAR_INFO_SIZE = AU_SYMBOL_SIZE + sizeof(int) + sizeof(double); // + average distance
 
     struct Tick
     {
@@ -186,19 +187,19 @@ namespace StockData
     {
         uint64_t time;  // for 1d bar or 1m bar
         double open;
-        double openDistance;
+        double openNormalized;
         double high;
-        double highDistance;
+        double highNormalized;
         double low;
-        double lowDistance;
+        double lowNormalized;
         double close;
-        double closeDistance;
+        double closeNormalized;
         double average;
-        double averageDistance;
+        double averageNormalized;
         double volume;
-        double volumeDistance;
+        double volumeNormalized;
         double amount;
-        double amountDistance;
+        double amountNormalized;
         double barDistance;
         uint64_t HasDistances;
 
@@ -252,19 +253,19 @@ namespace StockData
                 data.push_back(AugmentedBar{
                     time: bar.time,
                     open: bar.open,
-                    openDistance: 0.0,
+                    openNormalized: 0.0,
                     high: bar.high,
-                    highDistance: 0.0,
+                    highNormalized: 0.0,
                     low: bar.low,
-                    lowDistance: 0.0,
+                    lowNormalized: 0.0,
                     close: bar.close,
-                    closeDistance: 0.0,
+                    closeNormalized: 0.0,
                     average: (bar.amount / bar.volume),
-                    averageDistance: 0.0,
+                    averageNormalized: 0.0,
                     volume: bar.volume,
-                    volumeDistance: 0.0,
+                    volumeNormalized: 0.0,
                     amount: bar.amount / bar.volume,
-                    amountDistance: 0.0,
+                    amountNormalized: 0.0,
                     barDistance: 0.0,
                     HasDistances: 0
                 });
@@ -285,9 +286,9 @@ namespace StockData
             }
             size_t dataCount = (bufferSize - AUGMENTED_BAR_INFO_SIZE) / sizeof(AugmentedBar);
 
-            symbol.resize(BARS_SYMBOL_SIZE, '\0');
-            memcpy(symbol.data(), currentPos, BARS_SYMBOL_SIZE);
-            currentPos += BARS_SYMBOL_SIZE;
+            symbol.resize(AU_SYMBOL_SIZE, '\0');
+            memcpy(symbol.data(), currentPos, AU_SYMBOL_SIZE);
+            currentPos += AU_SYMBOL_SIZE;
 
             frequency = static_cast<DataFrequency>(*reinterpret_cast<int*>(currentPos));
             currentPos += sizeof(int);

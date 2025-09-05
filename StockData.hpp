@@ -301,6 +301,69 @@ namespace StockData
 
         }
 
+        void Normalize()
+        {
+            // find max and min
+            double priceMax = 0.0;
+            double priceMin = std::numeric_limits<double>::max();
+            double volumeMax = 0.0;
+            double volumeMin = std::numeric_limits<double>::max();
+            double amountMax = 0.0;
+            double amountMin = std::numeric_limits<double>::max();
+            for (const auto& bar : data)
+            {
+                if (bar.high > priceMax) priceMax = bar.high;
+                if (bar.low < priceMin) priceMin = bar.low;
+                if (bar.volume > volumeMax) volumeMax = bar.volume;
+                if (bar.volume < volumeMin) volumeMin = bar.volume;
+                if (bar.amount > amountMax) amountMax = bar.amount;
+                if (bar.amount < amountMin) amountMin = bar.amount;
+            }
+
+            double priceRange = priceMax - priceMin;
+            double volumeRange = volumeMax - volumeMin;
+            double amountRange = amountMax - amountMin;
+
+            for (auto& bar : data)
+            {
+                if (priceRange != 0.0)
+                {
+                    bar.openNormalized = (bar.open - priceMin) / priceRange;
+                    bar.highNormalized = (bar.high - priceMin) / priceRange;
+                    bar.lowNormalized = (bar.low - priceMin) / priceRange;
+                    bar.closeNormalized = (bar.close - priceMin) / priceRange;
+                    bar.averageNormalized = (bar.average - priceMin) / priceRange;
+                }
+                else
+                {
+                    bar.openNormalized = 0.0;
+                    bar.highNormalized = 0.0;
+                    bar.lowNormalized = 0.0;
+                    bar.closeNormalized = 0.0;
+                    bar.averageNormalized = 0.0;
+                }
+
+                if (volumeRange != 0.0)
+                {
+                    bar.volumeNormalized = (bar.volume - volumeMin) / volumeRange;
+                }
+                else
+                {
+                    bar.volumeNormalized = 0.0;
+                }
+
+                if (amountRange != 0.0)
+                {
+                    bar.amountNormalized = (bar.amount - amountMin) / amountRange;
+                }
+                else
+                {
+                    bar.amountNormalized = 0.0;
+                }
+
+            }
+        }
+
         /// @brief Find a specific number of bars from a given date (included)
         /// @param date the date from which to search
         /// @param count positive for bars after the given date, negative for otherwise

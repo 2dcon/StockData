@@ -185,7 +185,7 @@ namespace StockData
 
     struct AugmentedBar
     {
-        uint64_t time;  // for 1d bar or 1m bar
+        uint64_t time = 0;  // for 1d bar or 1m bar
         double open;
         double openNormalized;
         double high;
@@ -202,6 +202,13 @@ namespace StockData
         double amountNormalized;
         double barDistance;
         uint64_t HasDistances;
+
+        // AugmentedBar()
+        //     : time(0), open(0.0), openNormalized(0.0), high(0.0), highNormalized(0.0),
+        //       low(0.0), lowNormalized(0.0), close(0.0), closeNormalized(0.0),
+        //       average(0.0), averageNormalized(0.0), volume(0.0), volumeNormalized(0.0),
+        //       amount(0.0), amountNormalized(0.0), barDistance(0.0), HasDistances(0)
+        // {}
 
         friend std::ostream& operator<<(std::ostream& os, const AugmentedBar& bar)
         {
@@ -369,7 +376,7 @@ namespace StockData
         /// @param count positive for bars after the given date, negative for otherwise
         /// @param results the vector to store the results, gets cleared in this function, ordered by date in ascending order. Dates not found will be filled with nullptr
         /// @return true if any bars were found, false otherwise
-        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<const AugmentedBar*>& results) const
+        bool GetNBarsFromDate(size_t date, size_t count, bool backward, std::vector<AugmentedBar>& results) const
         {
             results.clear();
 
@@ -405,7 +412,7 @@ namespace StockData
                 {
                     for (long i = currentIdx; i < min; ++i)
                     {
-                        results.push_back(nullptr);
+                        results.push_back(AugmentedBar());
                     }
                     currentIdx = 0;
                 }
@@ -416,13 +423,13 @@ namespace StockData
                     {
                         for (long j = i; j <= endIdx; ++j)
                         {
-                            results.push_back(nullptr);
+                            results.push_back(AugmentedBar());
                         }
                         break;
                     }
 
                     // std::cout << "pushing: " << i << std::endl;
-                    results.push_back(&data[i]);
+                    results.push_back(data[i]);
                     // std::cout << "pushed: " << i << std::endl;
                 }
 

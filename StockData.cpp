@@ -54,6 +54,31 @@ void StockData::ReadTicks(const std::string &filePath, Ticks &ticks)
     }
 }
 
+std::string StockData::GetFilePath(const std::string &symbol, DataFrequency frequency, ulong date)
+{
+    switch(frequency)
+    {
+        case DataFrequency::Bar1m:
+            return DATA_DIR_1M + '/' + symbol + '/' + std::to_string(date) + ".1m.bars";
+        case DataFrequency::Bar1d:
+            return DATA_DIR_1D + '/' + symbol + ".1d.bars";
+        case DataFrequency::Tick:
+            // if (date != 0)
+            // {
+            //     return DATA_DIR_TICK + "/" + symbol + "." + std::to_string(date) + ".ticks";
+            // }
+            // else
+            // {
+            //     std::cerr << "Date is required for tick data.\n";
+            //     return std::string();
+            // }
+            return std::string(); // tick data loading is not supported yet
+        default:
+            std::cerr << "Unsupported frequency.\n";
+            return std::string();
+    }
+}
+
 void StockData::ReadBars(const char *buffer, size_t bufferSize, Bars &bars)
 {
     const char *bufferPos = buffer;

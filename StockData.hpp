@@ -17,6 +17,10 @@ namespace StockData
     constexpr size_t BAR_INFO_SIZE = BARS_SYMBOL_SIZE + sizeof(int);
     constexpr size_t AUGMENTED_BAR_INFO_SIZE = AU_SYMBOL_SIZE + sizeof(int) + sizeof(double); // + average distance
 
+    const std::string DATA_DIR_1M = "/home/ferris/mnt/4096/StockData/1m";
+    const std::string DATA_DIR_1D = "/home/ferris/mnt/4096/StockData/1d";
+    const std::string DATA_DIR_TICK = "/home/ferris/mnt/4096/StockData/tick";
+
     struct Tick
     {
         uint64_t time; // time of the day, e.g. 103003
@@ -271,7 +275,7 @@ namespace StockData
                     averageNormalized: 0.0,
                     volume: bar.volume,
                     volumeNormalized: 0.0,
-                    amount: bar.amount / bar.volume,
+                    amount: bar.amount,
                     amountNormalized: 0.0,
                     barDistance: 0.0,
                     HasDistances: 0
@@ -459,6 +463,8 @@ namespace StockData
 
     void ReadTicks(const char* buffer, const size_t& bufferSize, Ticks& ticks);
     void ReadTicks(const std::string& filePath, Ticks& ticks);
+
+    std::string GetFilePath(const std::string& symbol, DataFrequency frequency, ulong date = 0);
 
     /// @brief Reads bars data from bytes
     /// @param buffer

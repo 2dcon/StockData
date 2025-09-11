@@ -256,6 +256,7 @@ namespace StockData
         AugmentedBars(const Bars& rawBars)
         {
             symbol = rawBars.symbol;
+            symbol.resize(6, '\0');
             frequency = rawBars.frequency;
             averageDistance = 0.0;
             data.clear();

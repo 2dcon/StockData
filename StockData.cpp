@@ -105,17 +105,22 @@ void StockData::ReadBars(const std::string &filePath, Bars &bars)
         size_t fileSize = file.tellg();
         file.seekg(0, std::ios::beg);
         size_t dataSize = fileSize - StockData::BAR_INFO_SIZE;
-        size_t dataCount = dataSize / sizeof(StockData::Bar);
 
-        bars.symbol.resize(BARS_SYMBOL_SIZE, '\0');
+        std::string fileSuffix = filePath.substr(filePath.size() - 8);
+        if (fileSuffix == ".1m.bars")
+        {
+            dataSize -= sizeof(uint16_t);
+        }
+        size_t dataCount = dataSize / sizeof(StockData::Bar);
+        
+        bars.symbol.resize(BARS_SYMBOL_SIZE + 1, '\0'); // +1 for null terminator
         file.read(bars.symbol.data(), BARS_SYMBOL_SIZE);
 
         file.read((char*)&bars.frequency, sizeof(DataFrequency));
-
+        
         bars.data = std::vector<StockData::Bar>(dataCount);
         file.read((char*)bars.data.data(), dataSize);
 
-        file.close();
     }
     else
     {
